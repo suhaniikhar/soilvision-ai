@@ -23,6 +23,44 @@ st.set_page_config(
 st.markdown("""
 <style>
 
+/* Existing CSS stays here */
+/* CAMERA BUTTON */
+div.st-key-open_camera button {
+    width: 75px !important;
+    min-width: 75px !important;
+    height: 65px !important;
+    min-height: 65px !important;
+
+    background: #059669 !important;
+    border: none !important;
+    border-radius: 18px !important;
+    padding: 0 !important;
+}
+
+/* ENLARGE CAMERA ICON INSIDE BUTTON */
+div.st-key-open_camera button p {
+    font-size: 48px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+}
+
+/* HOVER */
+div.st-key-open_camera button:hover {
+    background: #047857 !important;
+}
+
+/* Camera hover ONLY */
+.st-key-open_camera button:hover {
+    background-color: #047857 !important;
+    color: white !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+
 /* ======================================================
    MAIN BACKGROUND
    ====================================================== */
@@ -247,10 +285,17 @@ section[data-testid="stSidebar"] * {
 
 
 /* ======================================================
-   BUTTON
+   PREDICT BUTTON
    ====================================================== */
 
-.stButton > button {
+.st-key-predict_soil button {
+    width: 100% !important;
+    min-height: 75px !important;
+    height: 75px !important;
+
+    font-size: 22px !important;
+    font-weight: 800 !important;
+
     background: linear-gradient(
         90deg,
         #059669,
@@ -260,23 +305,19 @@ section[data-testid="stSidebar"] * {
     color: white !important;
 
     border: none !important;
+    border-radius: 18px !important;
 
-    border-radius: 10px !important;
-
-    padding: 10px 25px !important;
-
-    font-weight: 700 !important;
+    padding: 15px 20px !important;
 
     transition: 0.3s !important;
 }
 
-.stButton > button:hover {
-    transform: translateY(-2px);
+.st-key-predict_soil button:hover {
+    transform: translateY(-3px);
 
     box-shadow:
-        0 8px 18px rgba(0,0,0,0.2);
+        0 8px 20px rgba(0,0,0,0.2);
 }
-
 
 /* ======================================================
    HEADINGS
@@ -513,7 +554,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### 🎓 Project Supervisor")
 
 st.sidebar.write(
-    "Prof. Girish Garghate"
+    "Prof. Samadhan Mandpe"
 )
 
 
@@ -574,45 +615,63 @@ st.write(
 
 
 # ==========================================================
-# FILE UPLOAD
+# COMPACT CAMERA ICON + GALLERY UPLOAD
 # ==========================================================
-
-
-# Soil Image Input
 
 st.subheader("📸 Soil Image Analysis")
 
-# Option 1: Capture image using camera
-st.write("Capture a Soil Image")
-camera_image = st.camera_input(
-    "Take a picture of the soil"
+st.write("Upload a soil image or capture one using the camera.")
+
+# Remember whether the camera should be open
+if "show_camera" not in st.session_state:
+    st.session_state.show_camera = False
+
+# Upload bar and small camera button side by side
+upload_col, camera_col = st.columns(
+    [10, 2],
+    vertical_alignment="bottom"
 )
 
-# Option 2: Upload image from gallery or computer
-st.write("Or Upload an Existing Image")
+with upload_col:
+    uploaded_image = st.file_uploader(
+        "Choose a soil image",
+        type=["jpg", "jpeg", "png"],
+        key="soil_gallery"
+    )
 
-uploaded_image = st.file_uploader(
-    "Choose a soil image",
-    type=["jpg", "jpeg", "png"]
-)
+with camera_col:
+    if st.button(
+        "📷",
+        type="secondary",
+        help="Open camera",
+        key="open_camera"
+    ):
+        st.session_state.show_camera = (
+            not st.session_state.show_camera
+        )
+    
 
-# Select the image from either option
+# Show the camera ONLY after clicking the icon
+camera_image = None
+
+if st.session_state.show_camera:
+
+    st.markdown("#### Capture Soil Image")
+
+    camera_image = st.camera_input(
+        "Take a picture of the soil",
+        key="soil_camera"
+    )
+
+# Select camera or gallery image
 if camera_image is not None:
     image_file = camera_image
+
 elif uploaded_image is not None:
     image_file = uploaded_image
+
 else:
     image_file = None
-
-# Display the selected image
-if image_file is not None:
-    image = Image.open(image_file).convert("RGB")
-
-    st.image(
-        image,
-        caption="Selected Soil Image",
-        use_container_width=True
-    )
 
 # ==========================================================
 # SESSION STATE
@@ -621,85 +680,53 @@ if image_file is not None:
 if "result" not in st.session_state:
     st.session_state.result = None
 
-
 # ==========================================================
 # IMAGE PROCESSING AND PREDICTION
 # ==========================================================
 
-if uploaded_file is not None:
+if image_file is not None:
+    try:
+        # Open either the captured photo or uploaded image consistently.
+        img = Image.open(image_file).convert("RGB")
 
-    img = Image.open(uploaded_file)
+        col1, col2 = st.columns([1, 1])
 
-    col1, col2 = st.columns([1.3, 1])
+        # ---------------- IMAGE PREVIEW ----------------
+        with col1:
+            st.markdown("### 🖼️ Selected Soil Image")
+            st.image(
+                img,
+                caption="Selected Soil Image",
+                use_container_width=True
+            )
 
-    # ---------------- IMAGE ----------------
+        # ---------------- PREDICTION ----------------
+        with col2:
+            st.markdown("### 🔍 Soil Analysis")
+            st.write("Click below to analyze the selected image.")
 
-    with col1:
-
-        st.markdown(
-            "### 🖼️ Uploaded Soil Image"
-        )
-
-        st.image(
-            img,
-            use_container_width=True
-        )
-
-
-    # ---------------- PREDICTION ----------------
-
-    with col2:
-
-        st.markdown(
-            "### 🔍 Soil Analysis"
-        )
-
-        st.write(
-            "Click the button below to analyze the uploaded image."
-        )
-
-        if st.button(
-            "🌱 Predict Soil Type",
-            use_container_width=True
-        ):
-
-            with st.spinner(
-                "Analyzing soil using AI..."
+            if st.button(
+                "🌱 Predict Soil Type",
+                use_container_width=True,
+                key="predict_soil"
             ):
+                with st.spinner("Analyzing soil using AI..."):
+                    # Resize to the input size used when training the CNN.
+                    img_resized = img.resize((128, 128))
 
-                # Resize image
-                img_resized = img.resize(
-                    (128, 128)
-                )
+                    # Convert to float32, normalize, and add batch dimension.
+                    img_array = np.asarray(img_resized, dtype=np.float32) / 255.0
+                    img_array = np.expand_dims(img_array, axis=0)
 
-                # Convert to NumPy
-                img_array = np.array(
-                    img_resized
-                )
+                    # Predict soil class using the existing trained model.
+                    prediction = model.predict(img_array, verbose=0)
+                    result = classes[int(np.argmax(prediction, axis=1)[0])]
 
-                # Normalize
-                img_array = img_array / 255.0
+                    # Store result for the result dashboard below.
+                    st.session_state.result = result
 
-                # Add batch dimension
-                img_array = np.expand_dims(
-                    img_array,
-                    axis=0
-                )
-
-                # Prediction
-                prediction = model.predict(
-                    img_array,
-                    verbose=0
-                )
-
-                # Select class
-                result = classes[
-                    np.argmax(prediction)
-                ]
-
-                # Save result
-                st.session_state.result = result
-
+    except Exception as e:
+        st.error(f"Could not read or analyze this image. Please try a JPG or PNG soil photo. Details: {e}")
 
 # ==========================================================
 # RESULT DASHBOARD

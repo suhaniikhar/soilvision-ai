@@ -1,4 +1,3 @@
-predict.py
 
 import tensorflow as tf
 import numpy as np
@@ -8,7 +7,10 @@ from tensorflow.keras.preprocessing import image
 # LOAD MODEL
 # =========================
 
-model = tf.keras.models.load_model("soil_model.h5")
+model = tf.keras.models.load_model(
+    "soil_model.h5",
+    compile=False
+)
 
 # =========================
 # SOIL CLASSES
@@ -50,14 +52,32 @@ img_array = np.expand_dims(
 # PREDICTION
 # =========================
 
-prediction = model.predict(img_array)
+prediction = model.predict(
+    img_array,
+    verbose=0
+)
 
-predicted_index = np.argmax(prediction)
+predicted_index = np.argmax(prediction[0])
 
-result = classes[predicted_index]
+confidence = float(prediction[0][predicted_index])
+
+# Temporary confidence threshold
+THRESHOLD = 0.70
 
 print("--------------------------------")
 print("SoilVision AI")
 print("--------------------------------")
-print("Predicted Soil Type:", result)
+
+if confidence < THRESHOLD:
+
+    print("⚠️ It is not a valid image.")
+    print("Please upload a soil image.")
+
+else:
+
+    result = classes[predicted_index]
+
+    print("Predicted Soil Type:", result)
+    print("Confidence:", round(confidence * 100, 2), "%")
+
 print("--------------------------------")
